@@ -31,11 +31,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: python
         run: |
-          import pathlib, flet_cli
-          p = pathlib.Path(flet_cli.__file__).parent / "__pyinstaller" / "win_utils.py"
+          import pathlib, importlib.util
+          spec = importlib.util.find_spec("flet_cli")
+          base = pathlib.Path(list(spec.submodule_search_locations)[0])
+          p = base / "__pyinstaller" / "win_utils.py"
           s = p.read_text(encoding="utf-8")
-          s = s.replace('open(exe_path, "ab", encoding="utf-8")', 'open(exe_path, "ab")')
-          p.write_text(s, encoding="utf-8")
+          bad = 'open(exe_path, "ab", encoding="utf-8")'
+          print("found bug line:", bad in s)
+          p.write_text(s.replace(bad, 'open(exe_path, "ab")'), encoding="utf-8")
           print("patched:", p)
       - name: Build
         run: flet pack healf_ver_2.py --name HealF
